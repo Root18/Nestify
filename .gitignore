@@ -1,0 +1,34 @@
+# User-specific files
+*.txt
+
+# Visual Studio hidden folder
+.vs/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+
+# NuGet
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+# Visual Studio user/workspace files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.GhostDoc.xml
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# VSIX output
+*.vsix
