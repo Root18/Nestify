@@ -45,12 +45,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Commands\AutoNestCommand.cs" />
     <Compile Include="Commands\NestFilesCommand.cs" />
     <Compile Include="Commands\UnnestFilesCommand.cs" />
     <Compile Include="Dialogs\ParentFilePickerDialog.cs" />
     <Compile Include="FileNestingHelper.cs" />
     <Compile Include="NestifyPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\AutoNestRuleEngine.cs" />
     <Compile Include="Services\FileNestingService.cs" />
   </ItemGroup>
   <ItemGroup>

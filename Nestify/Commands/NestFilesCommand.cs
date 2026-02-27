@@ -89,7 +89,7 @@ namespace Nestify.Commands
                 string directory = Path.GetDirectoryName(firstItemPath);
 
                 var selectedFileNames = new HashSet<string>(
-                    selectedItems.Select(i => i.Name), StringComparer.OrdinalIgnoreCase);
+                    selectedItems.Select(i => { ThreadHelper.ThrowIfNotOnUIThread(); return i.Name; }), StringComparer.OrdinalIgnoreCase);
 
                 // Also exclude files already nested under any selected item (prevents circular nesting)
                 foreach (var item in selectedItems)

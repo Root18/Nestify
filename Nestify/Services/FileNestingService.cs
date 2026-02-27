@@ -9,6 +9,7 @@ namespace Nestify.Services
     {
         public static void NestFile(IVsBuildPropertyStorage storage, uint itemId, string parentFileName)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             storage.SetItemAttribute(itemId, "DependentUpon", parentFileName);
         }
 

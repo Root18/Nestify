@@ -21,6 +21,7 @@ namespace Nestify
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             await Commands.NestFilesCommand.InitializeAsync(this);
             await Commands.UnnestFilesCommand.InitializeAsync(this);
+            await Commands.AutoNestCommand.InitializeAsync(this);
         }
     }
 }
