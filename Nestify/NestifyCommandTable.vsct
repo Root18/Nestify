@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <Extern href="stdidcmd.h" />
+  <Extern href="vsshlids.h" />
+
+  <Commands package="guidNestifyPackage">
+    <Groups>
+      <Group guid="guidNestifyCmdSet" id="NestifyMenuGroup" priority="0x0250">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE" />
+      </Group>
+      <Group guid="guidNestifyCmdSet" id="NestifyProjectGroup" priority="0x0250">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE" />
+      </Group>
+    </Groups>
+
+    <Buttons>
+      <Button guid="guidNestifyCmdSet" id="NestFilesCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidNestifyCmdSet" id="NestifyMenuGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Nestify: Nest under...</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidNestifyCmdSet" id="UnnestFilesCommandId" priority="0x0200" type="Button">
+        <Parent guid="guidNestifyCmdSet" id="NestifyMenuGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Nestify: Unnest</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidNestifyCmdSet" id="AutoNestCommandId" priority="0x0300" type="Button">
+        <Parent guid="guidNestifyCmdSet" id="NestifyMenuGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Nestify: Auto-nest</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+  <CommandPlacements>
+    <CommandPlacement guid="guidNestifyCmdSet" id="NestifyMenuGroup" priority="0x0250">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_XPROJ_MULTIITEM" />
+    </CommandPlacement>
+    <!-- Auto-nest on project/folder nodes -->
+    <CommandPlacement guid="guidNestifyCmdSet" id="AutoNestCommandId" priority="0x0100">
+      <Parent guid="guidNestifyCmdSet" id="NestifyProjectGroup" />
+    </CommandPlacement>
+    <CommandPlacement guid="guidNestifyCmdSet" id="NestifyProjectGroup" priority="0x0250">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_FOLDERNODE" />
+    </CommandPlacement>
+  </CommandPlacements>
+
+  <Symbols>
+    <GuidSymbol name="guidNestifyPackage" value="{d79ad6c9-74af-4ea1-8c02-0c62866f1a7b}" />
+    <GuidSymbol name="guidNestifyCmdSet" value="{e2c2b1a0-3d4e-4f5a-8b6c-7d8e9f0a1b2c}">
+      <IDSymbol name="NestifyMenuGroup" value="0x1020" />
+      <IDSymbol name="NestifyProjectGroup" value="0x1021" />
+      <IDSymbol name="NestFilesCommandId" value="0x0100" />
+      <IDSymbol name="UnnestFilesCommandId" value="0x0200" />
+      <IDSymbol name="AutoNestCommandId" value="0x0300" />
+    </GuidSymbol>
+  </Symbols>
+
+</CommandTable>
