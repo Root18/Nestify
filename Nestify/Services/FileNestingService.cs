@@ -1,19 +1,20 @@
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Nestify.Abstractions;
 using System.Collections.Generic;
 
 namespace Nestify.Services
 {
-    internal static class FileNestingService
+    internal class FileNestingService : IFileNestingService
     {
-        public static void NestFile(IVsBuildPropertyStorage storage, uint itemId, string parentFileName)
+        public void NestFile(IVsBuildPropertyStorage storage, uint itemId, string parentFileName)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             storage.SetItemAttribute(itemId, "DependentUpon", parentFileName);
         }
 
-        public static void UnnestFile(ProjectItem childItem, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage)
+        public void UnnestFile(ProjectItem childItem, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -22,20 +23,15 @@ namespace Nestify.Services
             var parentFile = childItem.Collection.Parent as ProjectItem;
             if (parentFile == null) return;
 
-            // Collect all nested descendants before removing (they'd be lost otherwise)
             var descendants = new List<(string filePath, string parentFileName)>();
             CollectDescendants(childItem, descendants);
 
-            // Get the folder-level collection where the parent file lives
             ProjectItems targetCollection = parentFile.Collection;
 
-            // Remove from nested position (keeps files on disk but removes from project tree)
             childItem.Remove();
 
-            // Re-add the unnested file at the same folder level as the former parent
             targetCollection.AddFromFile(filePath);
 
-            // Re-add all descendants and restore their nesting via DependentUpon
             foreach (var desc in descendants)
             {
                 targetCollection.AddFromFile(desc.filePath);

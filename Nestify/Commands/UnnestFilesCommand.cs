@@ -2,6 +2,7 @@ using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Nestify.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
@@ -15,11 +16,19 @@ namespace Nestify.Commands
         public static readonly Guid CommandSet = new Guid("e2c2b1a0-3d4e-4f5a-8b6c-7d8e9f0a1b2c");
 
         private readonly AsyncPackage _package;
+        private readonly IFileValidator _fileValidator;
+        private readonly IFileNestingService _nestingService;
 
-        private UnnestFilesCommand(AsyncPackage package, OleMenuCommandService commandService)
+        private UnnestFilesCommand(
+            AsyncPackage package,
+            OleMenuCommandService commandService,
+            IFileValidator fileValidator,
+            IFileNestingService nestingService)
         {
             _package = package ?? throw new ArgumentNullException(nameof(package));
             commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
+            _fileValidator = fileValidator ?? throw new ArgumentNullException(nameof(fileValidator));
+            _nestingService = nestingService ?? throw new ArgumentNullException(nameof(nestingService));
 
             var menuCommandID = new CommandID(CommandSet, CommandId);
             var menuItem = new OleMenuCommand(Execute, menuCommandID);
@@ -29,11 +38,14 @@ namespace Nestify.Commands
 
         public static UnnestFilesCommand Instance { get; private set; }
 
-        public static async Task InitializeAsync(AsyncPackage package)
+        public static async Task InitializeAsync(
+            AsyncPackage package,
+            IFileValidator fileValidator,
+            IFileNestingService nestingService)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
             var commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
-            Instance = new UnnestFilesCommand(package, commandService);
+            Instance = new UnnestFilesCommand(package, commandService, fileValidator, nestingService);
         }
 
         private void OnBeforeQueryStatus(object sender, EventArgs e)
@@ -48,7 +60,7 @@ namespace Nestify.Commands
 
             foreach (SelectedItem item in dte.SelectedItems)
             {
-                if (item.ProjectItem != null && FileNestingHelper.IsSupportedFile(item.ProjectItem.Name))
+                if (item.ProjectItem != null && _fileValidator.IsSupportedFile(item.ProjectItem.Name))
                 {
                     try
                     {
@@ -85,7 +97,7 @@ namespace Nestify.Commands
 
                 foreach (SelectedItem item in dte.SelectedItems)
                 {
-                    if (item.ProjectItem != null && FileNestingHelper.IsSupportedFile(item.ProjectItem.Name))
+                    if (item.ProjectItem != null && _fileValidator.IsSupportedFile(item.ProjectItem.Name))
                     {
                         selectedItems.Add(item.ProjectItem);
                         if (project == null)
@@ -102,7 +114,7 @@ namespace Nestify.Commands
 
                 foreach (var item in selectedItems)
                 {
-                    Services.FileNestingService.UnnestFile(item, hierarchy, storage);
+                    _nestingService.UnnestFile(item, hierarchy, storage);
                 }
 
                 project.Save();
