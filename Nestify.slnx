@@ -4,6 +4,7 @@
     <Platform Name="arm64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="Nestify.Tests/Nestify.Tests.csproj" />
   <Project Path="Nestify/Nestify.csproj" Id="af9cf0bb-2046-48f1-8b32-d174297f20db">
     <Platform Solution="*|arm64" Project="arm64" />
     <Platform Solution="*|x86" Project="x86" />
