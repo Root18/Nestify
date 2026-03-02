@@ -37,6 +37,19 @@ Download and install the Nestify extension from the latest release.
 
 Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md) before submitting a pull request.
 
+## Project Structure
+
+| Project | Description |
+| --- | --- |
+| `Nestify` | Visual Studio extension (VSIX) — targets .NET Framework 4.7.2 |
+| `Nestify.Tests` | Unit tests (MSTest) — targets .NET Framework 4.7.2 |
+
+Run the tests with:
+
+```bash
+dotnet test Nestify.Tests\Nestify.Tests.csproj
+```
+
 ## Code of Conduct
 
 This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
