@@ -1,6 +1,14 @@
+<p align="center">
+  <img src="Nestify/Resources/nestify_icon.png" alt="Nestify logo" width="128" />
+</p>
+
 # Nestify
 
-A Visual Studio extension that brings smart file nesting to Solution Explorer. Nest, unnest, and auto-nest files based on naming conventions — keeping your projects tidy and navigable.
+A Visual Studio extension that brings smart file nesting to Solution Explorer. Nest, unnest, and auto-nest files based on naming conventions — keeping your projects tidy and navigable. Supports Community, Professional, and Enterprise editions.
+
+<p align="center">
+  <img src="Nestify/Resources/nestify_preview.gif" alt="Nestify demo" />
+</p>
 
 ## Features
 
@@ -16,10 +24,10 @@ A Visual Studio extension that brings smart file nesting to Solution Explorer. N
 
 ## Requirements
 
-| Requirement    | Version      |
-| -------------- | ------------ |
-| Visual Studio  | 2022 (17.0+) |
-| .NET Framework | 4.7.2        |
+| Requirement    | Version                                      |
+| -------------- | -------------------------------------------- |
+| Visual Studio  | 2022 (17.0+) Community, Professional, or Enterprise |
+| .NET Framework | 4.7.2                                        |
 
 ## Installation
 
@@ -64,7 +72,7 @@ Need help? Check out [SUPPORT.md](SUPPORT.md) for available resources.
 
 ## License
 
-This project is open source. See the repository for license details.
+This project is licensed under the [MIT License](LICENSE).
 
 ## Sponsor
 
