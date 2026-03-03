@@ -2,12 +2,12 @@ using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Nestify.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
-using System.Windows.Interop;
 using Task = System.Threading.Tasks.Task;
 
 namespace Nestify.Commands
@@ -18,11 +18,25 @@ namespace Nestify.Commands
         public static readonly Guid CommandSet = new Guid("e2c2b1a0-3d4e-4f5a-8b6c-7d8e9f0a1b2c");
 
         private readonly AsyncPackage _package;
+        private readonly IFileValidator _fileValidator;
+        private readonly IFileNestingService _nestingService;
+        private readonly ISiblingFileProvider _siblingFileProvider;
+        private readonly IDialogService _dialogService;
 
-        private NestFilesCommand(AsyncPackage package, OleMenuCommandService commandService)
+        private NestFilesCommand(
+            AsyncPackage package,
+            OleMenuCommandService commandService,
+            IFileValidator fileValidator,
+            IFileNestingService nestingService,
+            ISiblingFileProvider siblingFileProvider,
+            IDialogService dialogService)
         {
             _package = package ?? throw new ArgumentNullException(nameof(package));
             commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
+            _fileValidator = fileValidator ?? throw new ArgumentNullException(nameof(fileValidator));
+            _nestingService = nestingService ?? throw new ArgumentNullException(nameof(nestingService));
+            _siblingFileProvider = siblingFileProvider ?? throw new ArgumentNullException(nameof(siblingFileProvider));
+            _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
 
             var menuCommandID = new CommandID(CommandSet, CommandId);
             var menuItem = new OleMenuCommand(Execute, menuCommandID);
@@ -32,11 +46,16 @@ namespace Nestify.Commands
 
         public static NestFilesCommand Instance { get; private set; }
 
-        public static async Task InitializeAsync(AsyncPackage package)
+        public static async Task InitializeAsync(
+            AsyncPackage package,
+            IFileValidator fileValidator,
+            IFileNestingService nestingService,
+            ISiblingFileProvider siblingFileProvider,
+            IDialogService dialogService)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
             var commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
-            Instance = new NestFilesCommand(package, commandService);
+            Instance = new NestFilesCommand(package, commandService, fileValidator, nestingService, siblingFileProvider, dialogService);
         }
 
         private void OnBeforeQueryStatus(object sender, EventArgs e)
@@ -51,7 +70,7 @@ namespace Nestify.Commands
 
             foreach (SelectedItem item in dte.SelectedItems)
             {
-                if (item.ProjectItem != null && FileNestingHelper.IsSupportedFile(item.ProjectItem.Name))
+                if (item.ProjectItem != null && _fileValidator.IsSupportedFile(item.ProjectItem.Name))
                 {
                     cmd.Visible = true;
                     return;
@@ -74,7 +93,7 @@ namespace Nestify.Commands
 
                 foreach (SelectedItem item in dte.SelectedItems)
                 {
-                    if (item.ProjectItem != null && FileNestingHelper.IsSupportedFile(item.ProjectItem.Name))
+                    if (item.ProjectItem != null && _fileValidator.IsSupportedFile(item.ProjectItem.Name))
                     {
                         selectedItems.Add(item.ProjectItem);
                         if (project == null)
@@ -91,13 +110,12 @@ namespace Nestify.Commands
                 var selectedFileNames = new HashSet<string>(
                     selectedItems.Select(i => { ThreadHelper.ThrowIfNotOnUIThread(); return i.Name; }), StringComparer.OrdinalIgnoreCase);
 
-                // Also exclude files already nested under any selected item (prevents circular nesting)
                 foreach (var item in selectedItems)
                 {
                     CollectDescendantNames(item, selectedFileNames);
                 }
 
-                var siblingFiles = GetSiblingFiles(directory, selectedFileNames);
+                var siblingFiles = _siblingFileProvider.GetSiblingFiles(directory, selectedFileNames);
 
                 if (siblingFiles.Count == 0)
                 {
@@ -111,14 +129,9 @@ namespace Nestify.Commands
                     return;
                 }
 
-                var dialog = new Dialogs.ParentFilePickerDialog(siblingFiles);
-                var hwndHelper = new WindowInteropHelper(dialog);
-                hwndHelper.Owner = dte.MainWindow.HWnd;
-
-                if (dialog.ShowDialog() != true || string.IsNullOrEmpty(dialog.SelectedFile))
+                string parentFileName = _dialogService.ShowParentFilePicker(siblingFiles, dte.MainWindow.HWnd);
+                if (string.IsNullOrEmpty(parentFileName))
                     return;
-
-                string parentFileName = dialog.SelectedFile;
 
                 var solution = Package.GetGlobalService(typeof(SVsSolution)) as IVsSolution;
                 solution.GetProjectOfUniqueName(project.UniqueName, out IVsHierarchy hierarchy);
@@ -129,7 +142,7 @@ namespace Nestify.Commands
                     string itemFullPath = item.FileNames[1];
                     if (hierarchy.ParseCanonicalName(itemFullPath, out uint itemId) == 0 && itemId != 0)
                     {
-                        Services.FileNestingService.NestFile(storage, itemId, parentFileName);
+                        _nestingService.NestFile(storage, itemId, parentFileName);
                     }
                 }
 
@@ -145,26 +158,6 @@ namespace Nestify.Commands
                     OLEMSGBUTTON.OLEMSGBUTTON_OK,
                     OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
             }
-        }
-
-        private static List<string> GetSiblingFiles(string directory, HashSet<string> excludeNames)
-        {
-            var result = new List<string>();
-
-            if (!Directory.Exists(directory))
-                return result;
-
-            foreach (string filePath in Directory.GetFiles(directory))
-            {
-                string fileName = Path.GetFileName(filePath);
-                if (!excludeNames.Contains(fileName) && FileNestingHelper.IsPickerCandidate(fileName))
-                {
-                    result.Add(fileName);
-                }
-            }
-
-            result.Sort(StringComparer.OrdinalIgnoreCase);
-            return result;
         }
 
         private static void CollectDescendantNames(ProjectItem item, HashSet<string> names)

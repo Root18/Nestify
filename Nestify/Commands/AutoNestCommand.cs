@@ -2,8 +2,8 @@ using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Nestify.Abstractions;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.IO;
 using Task = System.Threading.Tasks.Task;
@@ -16,11 +16,16 @@ namespace Nestify.Commands
         public static readonly Guid CommandSet = new Guid("e2c2b1a0-3d4e-4f5a-8b6c-7d8e9f0a1b2c");
 
         private readonly AsyncPackage _package;
+        private readonly IDirectoryScanner _directoryScanner;
 
-        private AutoNestCommand(AsyncPackage package, OleMenuCommandService commandService)
+        private AutoNestCommand(
+            AsyncPackage package,
+            OleMenuCommandService commandService,
+            IDirectoryScanner directoryScanner)
         {
             _package = package ?? throw new ArgumentNullException(nameof(package));
             commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
+            _directoryScanner = directoryScanner ?? throw new ArgumentNullException(nameof(directoryScanner));
 
             var menuCommandID = new CommandID(CommandSet, CommandId);
             var menuItem = new OleMenuCommand(Execute, menuCommandID);
@@ -30,11 +35,11 @@ namespace Nestify.Commands
 
         public static AutoNestCommand Instance { get; private set; }
 
-        public static async Task InitializeAsync(AsyncPackage package)
+        public static async Task InitializeAsync(AsyncPackage package, IDirectoryScanner directoryScanner)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
             var commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
-            Instance = new AutoNestCommand(package, commandService);
+            Instance = new AutoNestCommand(package, commandService, directoryScanner);
         }
 
         private void OnBeforeQueryStatus(object sender, EventArgs e)
@@ -102,8 +107,7 @@ namespace Nestify.Commands
                 solution.GetProjectOfUniqueName(project.UniqueName, out IVsHierarchy hierarchy);
                 var storage = hierarchy as IVsBuildPropertyStorage;
 
-                int nestedCount = 0;
-                ProcessDirectory(targetDirectory, hierarchy, storage, ref nestedCount);
+                int nestedCount = _directoryScanner.ScanAndNest(targetDirectory, hierarchy, storage);
 
                 if (nestedCount > 0)
                 {
@@ -129,54 +133,6 @@ namespace Nestify.Commands
                     OLEMSGICON.OLEMSGICON_CRITICAL,
                     OLEMSGBUTTON.OLEMSGBUTTON_OK,
                     OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-            }
-        }
-
-        private static void ProcessDirectory(string directory, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage, ref int nestedCount)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
-            // Collect file names in this directory
-            var files = Directory.GetFiles(directory);
-            var fileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var f in files)
-            {
-                fileNames.Add(Path.GetFileName(f));
-            }
-
-            // Apply auto-nest rules
-            foreach (var filePath in files)
-            {
-                string fileName = Path.GetFileName(filePath);
-                string parentName = Services.AutoNestRuleEngine.FindParent(fileName, fileNames);
-
-                if (parentName == null)
-                    continue;
-
-                // Resolve item in the project hierarchy
-                if (hierarchy.ParseCanonicalName(filePath, out uint itemId) != 0 || itemId == 0)
-                    continue;
-
-                // Skip if already nested
-                storage.GetItemAttribute(itemId, "DependentUpon", out string existingParent);
-                if (!string.IsNullOrEmpty(existingParent))
-                    continue;
-
-                Services.FileNestingService.NestFile(storage, itemId, parentName);
-                nestedCount++;
-            }
-
-            // Recurse into subdirectories, skipping build/hidden folders
-            foreach (var subDir in Directory.GetDirectories(directory))
-            {
-                string dirName = Path.GetFileName(subDir);
-                if (dirName.StartsWith(".", StringComparison.Ordinal) ||
-                    dirName.Equals("bin", StringComparison.OrdinalIgnoreCase) ||
-                    dirName.Equals("obj", StringComparison.OrdinalIgnoreCase) ||
-                    dirName.Equals("node_modules", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                ProcessDirectory(subDir, hierarchy, storage, ref nestedCount);
             }
         }
     }

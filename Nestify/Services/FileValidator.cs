@@ -1,10 +1,11 @@
+using Nestify.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Nestify
+namespace Nestify.Services
 {
-    internal static class FileNestingHelper
+    internal class FileValidator : IFileValidator
     {
         private static readonly HashSet<string> SupportedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -81,28 +82,15 @@ namespace Nestify
             "pnpm-lock.yaml",
         };
 
-        public static bool IsSupportedFile(string fileName)
+        public bool IsSupportedFile(string fileName)
         {
             string ext = Path.GetExtension(fileName);
             return !string.IsNullOrEmpty(ext) && SupportedExtensions.Contains(ext);
         }
 
-        public static bool IsPickerCandidate(string fileName)
+        public bool IsPickerCandidate(string fileName)
         {
             return IsSupportedFile(fileName) && !ExcludedFromPicker.Contains(fileName);
-        }
-
-        public static string GetRelativePath(string basePath, string fullPath)
-        {
-            if (!basePath.EndsWith("\\", StringComparison.Ordinal))
-                basePath += "\\";
-
-            if (fullPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
-            {
-                return fullPath.Substring(basePath.Length);
-            }
-
-            return Path.GetFileName(fullPath);
         }
     }
 }

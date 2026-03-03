@@ -1,6 +1,9 @@
 ﻿using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Nestify.Abstractions;
+using Nestify.Rules;
+using Nestify.Services;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -19,9 +22,26 @@ namespace Nestify
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
-            await Commands.NestFilesCommand.InitializeAsync(this);
-            await Commands.UnnestFilesCommand.InitializeAsync(this);
-            await Commands.AutoNestCommand.InitializeAsync(this);
+
+            // Compose the object graph (Composition Root)
+            IFileValidator fileValidator = new FileValidator();
+            IFileNestingService nestingService = new FileNestingService();
+
+            INestingRule[] rules = new INestingRule[]
+            {
+                new CSharpInterfaceNestingRule(),
+                new JavaScriptBundleMinNestingRule(),
+                new JavaScriptBundleNestingRule(),
+                new JavaScriptMinNestingRule()
+            };
+            IAutoNestRuleEngine ruleEngine = new AutoNestRuleEngine(rules);
+            IDirectoryScanner directoryScanner = new DirectoryScanner(ruleEngine, nestingService);
+            ISiblingFileProvider siblingFileProvider = new SiblingFileProvider(fileValidator);
+            IDialogService dialogService = new DialogService();
+
+            await Commands.NestFilesCommand.InitializeAsync(this, fileValidator, nestingService, siblingFileProvider, dialogService);
+            await Commands.UnnestFilesCommand.InitializeAsync(this, fileValidator, nestingService);
+            await Commands.AutoNestCommand.InitializeAsync(this, directoryScanner);
         }
     }
 }
