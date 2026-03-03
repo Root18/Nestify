@@ -82,6 +82,18 @@
     <Content Include="Resources\nestify_preview.gif">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Content Include="..\LICENSE">
+      <Link>LICENSE</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="..\GETTING_STARTED.md">
+      <Link>GETTING_STARTED.md</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="..\RELEASE_NOTES.md">
+      <Link>RELEASE_NOTES.md</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <VSCTCompile Include="NestifyCommandTable.vsct">

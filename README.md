@@ -72,7 +72,7 @@ Need help? Check out [SUPPORT.md](SUPPORT.md) for available resources.
 
 ## License
 
-This project is open source. See the repository for license details.
+This project is licensed under the [MIT License](LICENSE).
 
 ## Sponsor
 

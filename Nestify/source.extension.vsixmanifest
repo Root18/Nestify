@@ -5,8 +5,12 @@
 		<DisplayName>Nestify</DisplayName>
 		<Description xml:space="preserve">Smart file nesting for Solution Explorer. Nest, unnest, and auto-nest files based on naming conventions — keeping your .NET and JavaScript projects tidy and navigable. Supports C# interface nesting, minified/bundled JS nesting, and 20+ file types.</Description>
 		<MoreInfo>https://github.com/Root18/Nestify</MoreInfo>
+		<License>LICENSE</License>
+		<GettingStartedGuide>GETTING_STARTED.md</GettingStartedGuide>
+		<ReleaseNotes>RELEASE_NOTES.md</ReleaseNotes>
 		<Icon>Resources\nestify_icon.png</Icon>
 		<PreviewImage>Resources\nestify_preview.gif</PreviewImage>
+		<Tags>Nestify, File Nesting, Visual Studio 2022, Visual Studio 2026, Solution Explorer, Nest Files, Auto-Nest, Unnest, Project Organization, File Management, Productivity, CSharp, JavaScript, TypeScript, VSIX</Tags>
 	</Metadata>
 	<Installation>
 		<InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, )">
