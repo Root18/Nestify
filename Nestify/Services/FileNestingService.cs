@@ -2,58 +2,29 @@ using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Nestify.Abstractions;
-using System.Collections.Generic;
 
-namespace Nestify.Services
+namespace Nestify.Services;
+
+internal class FileNestingService : IFileNestingService
 {
-    internal class FileNestingService : IFileNestingService
+    public void NestFile(ProjectItem childItem, ProjectItem parentItem, IVsHierarchy hierarchy,
+        IVsBuildPropertyStorage storage)
     {
-        public void NestFile(IVsBuildPropertyStorage storage, uint itemId, string parentFileName)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            storage.SetItemAttribute(itemId, "DependentUpon", parentFileName);
-        }
+        ThreadHelper.ThrowIfNotOnUIThread();
 
-        public void UnnestFile(ProjectItem childItem, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
+        var childPath = childItem.FileNames[1];
+        if (hierarchy.ParseCanonicalName(childPath, out var itemId) != 0 || itemId == 0) return;
+        storage.SetItemAttribute(itemId, "DependentUpon", parentItem.Name);
+        storage.SetItemAttribute(itemId, "NestifyExclude", "false");
+    }
 
-            string filePath = childItem.FileNames[1];
+    public void UnnestFile(ProjectItem childItem, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage)
+    {
+        ThreadHelper.ThrowIfNotOnUIThread();
 
-            var parentFile = childItem.Collection.Parent as ProjectItem;
-            if (parentFile == null) return;
-
-            var descendants = new List<(string filePath, string parentFileName)>();
-            CollectDescendants(childItem, descendants);
-
-            ProjectItems targetCollection = parentFile.Collection;
-
-            childItem.Remove();
-
-            targetCollection.AddFromFile(filePath);
-
-            foreach (var desc in descendants)
-            {
-                targetCollection.AddFromFile(desc.filePath);
-
-                if (hierarchy.ParseCanonicalName(desc.filePath, out uint itemId) == 0 && itemId != 0)
-                {
-                    storage.SetItemAttribute(itemId, "DependentUpon", desc.parentFileName);
-                }
-            }
-        }
-
-        private static void CollectDescendants(ProjectItem item, List<(string filePath, string parentFileName)> descendants)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
-            if (item.ProjectItems == null || item.ProjectItems.Count == 0) return;
-
-            foreach (ProjectItem child in item.ProjectItems)
-            {
-                descendants.Add((child.FileNames[1], item.Name));
-                CollectDescendants(child, descendants);
-            }
-        }
+        var filePath = childItem.FileNames[1];
+        if (hierarchy.ParseCanonicalName(filePath, out var itemId) != 0 || itemId == 0) return;
+        storage.SetItemAttribute(itemId, "DependentUpon", "");
+        storage.SetItemAttribute(itemId, "NestifyExclude", "true");
     }
 }

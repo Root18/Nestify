@@ -92,7 +92,7 @@ namespace Nestify.Tests.Services
 
         private class StubFileNestingService : IFileNestingService
         {
-            public void NestFile(Microsoft.VisualStudio.Shell.Interop.IVsBuildPropertyStorage storage, uint itemId, string parentFileName) { }
+            public void NestFile(EnvDTE.ProjectItem childItem, EnvDTE.ProjectItem parentItem, Microsoft.VisualStudio.Shell.Interop.IVsHierarchy hierarchy, Microsoft.VisualStudio.Shell.Interop.IVsBuildPropertyStorage storage) { }
             public void UnnestFile(EnvDTE.ProjectItem childItem, Microsoft.VisualStudio.Shell.Interop.IVsHierarchy hierarchy, Microsoft.VisualStudio.Shell.Interop.IVsBuildPropertyStorage storage) { }
         }
     }

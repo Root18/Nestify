@@ -1,3 +1,4 @@
+using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Nestify.Abstractions;
@@ -5,71 +6,94 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Nestify.Services
-{
-    internal class DirectoryScanner : IDirectoryScanner
-    {
-        private readonly IAutoNestRuleEngine _ruleEngine;
-        private readonly IFileNestingService _nestingService;
+namespace Nestify.Services;
 
-        private static readonly HashSet<string> ExcludedDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+internal class DirectoryScanner(IAutoNestRuleEngine ruleEngine, IFileNestingService nestingService)
+    : IDirectoryScanner
+{
+    private readonly IAutoNestRuleEngine _ruleEngine =
+        ruleEngine ?? throw new ArgumentNullException(nameof(ruleEngine));
+
+    private readonly IFileNestingService _nestingService =
+        nestingService ?? throw new ArgumentNullException(nameof(nestingService));
+
+    private static readonly HashSet<string> ExcludedDirectories =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "bin", "obj", "node_modules"
         };
 
-        public DirectoryScanner(IAutoNestRuleEngine ruleEngine, IFileNestingService nestingService)
+    public int ScanAndNest(string directory, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage)
+    {
+        ThreadHelper.ThrowIfNotOnUIThread();
+        var nestedCount = 0;
+        ProcessDirectory(directory, hierarchy, storage, ref nestedCount);
+        return nestedCount;
+    }
+
+    private void ProcessDirectory(string directory, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage,
+        ref int nestedCount)
+    {
+        ThreadHelper.ThrowIfNotOnUIThread();
+
+        var files = Directory.GetFiles(directory);
+        var fileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var f in files)
         {
-            _ruleEngine = ruleEngine ?? throw new ArgumentNullException(nameof(ruleEngine));
-            _nestingService = nestingService ?? throw new ArgumentNullException(nameof(nestingService));
+            fileNames.Add(Path.GetFileName(f));
         }
 
-        public int ScanAndNest(string directory, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage)
+        foreach (var filePath in files)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            int nestedCount = 0;
-            ProcessDirectory(directory, hierarchy, storage, ref nestedCount);
-            return nestedCount;
+            var fileName = Path.GetFileName(filePath);
+            var parentName = _ruleEngine.FindParent(fileName, fileNames);
+
+            if (parentName == null)
+                continue;
+
+            if (hierarchy.ParseCanonicalName(filePath, out var itemId) != 0 || itemId == 0)
+                continue;
+
+            hierarchy.GetProperty(itemId, (int)__VSHPROPID.VSHPROPID_ExtObject, out var itemObj);
+            if (itemObj is not ProjectItem childItem || IsAlreadyNested(childItem))
+                continue;
+
+            storage.GetItemAttribute(itemId, "NestifyExclude", out var excludeValue);
+            if (string.Equals(excludeValue, "true", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var parentFullPath = Path.Combine(directory, parentName);
+            if (hierarchy.ParseCanonicalName(parentFullPath, out uint parentId) != 0 || parentId == 0) continue;
+            hierarchy.GetProperty(parentId, (int)__VSHPROPID.VSHPROPID_ExtObject, out object parentObj);
+            if (parentObj is not ProjectItem parentItem) continue;
+            _nestingService.NestFile(childItem, parentItem, hierarchy, storage);
+            nestedCount++;
         }
 
-        private void ProcessDirectory(string directory, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage, ref int nestedCount)
+        foreach (var subDir in Directory.GetDirectories(directory))
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
+            var dirName = Path.GetFileName(subDir);
+            if (dirName.StartsWith(".", StringComparison.Ordinal) ||
+                ExcludedDirectories.Contains(dirName))
+                continue;
 
-            var files = Directory.GetFiles(directory);
-            var fileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var f in files)
-            {
-                fileNames.Add(Path.GetFileName(f));
-            }
+            ProcessDirectory(subDir, hierarchy, storage, ref nestedCount);
+        }
+    }
 
-            foreach (var filePath in files)
-            {
-                string fileName = Path.GetFileName(filePath);
-                string parentName = _ruleEngine.FindParent(fileName, fileNames);
-
-                if (parentName == null)
-                    continue;
-
-                if (hierarchy.ParseCanonicalName(filePath, out uint itemId) != 0 || itemId == 0)
-                    continue;
-
-                storage.GetItemAttribute(itemId, "DependentUpon", out string existingParent);
-                if (!string.IsNullOrEmpty(existingParent))
-                    continue;
-
-                _nestingService.NestFile(storage, itemId, parentName);
-                nestedCount++;
-            }
-
-            foreach (var subDir in Directory.GetDirectories(directory))
-            {
-                string dirName = Path.GetFileName(subDir);
-                if (dirName.StartsWith(".", StringComparison.Ordinal) ||
-                    ExcludedDirectories.Contains(dirName))
-                    continue;
-
-                ProcessDirectory(subDir, hierarchy, storage, ref nestedCount);
-            }
+    private static bool IsAlreadyNested(ProjectItem item)
+    {
+        ThreadHelper.ThrowIfNotOnUIThread();
+        try
+        {
+            var parent = item.Collection.Parent as ProjectItem;
+            return parent != null && string.Equals(parent.Kind,
+                EnvDTE.Constants.vsProjectItemKindPhysicalFile,
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
         }
     }
 }

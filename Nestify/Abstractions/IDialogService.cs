@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace Nestify.Abstractions
+namespace Nestify.Abstractions;
+
+internal interface IDialogService
 {
-    internal interface IDialogService
-    {
-        string ShowParentFilePicker(List<string> files, IntPtr ownerHandle);
-    }
+    string ShowParentFilePicker(List<string> files, IntPtr ownerHandle);
 }

@@ -1,9 +1,8 @@
 using Microsoft.VisualStudio.Shell.Interop;
 
-namespace Nestify.Abstractions
+namespace Nestify.Abstractions;
+
+internal interface IDirectoryScanner
 {
-    internal interface IDirectoryScanner
-    {
-        int ScanAndNest(string directory, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage);
-    }
+    int ScanAndNest(string directory, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage);
 }

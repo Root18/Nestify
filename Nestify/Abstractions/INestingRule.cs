@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 
-namespace Nestify.Abstractions
+namespace Nestify.Abstractions;
+
+internal interface INestingRule
 {
-    internal interface INestingRule
-    {
-        bool CanHandle(string fileName);
-        string FindParent(string fileName, HashSet<string> availableFiles);
-    }
+    bool CanHandle(string fileName);
+    string FindParent(string fileName, HashSet<string> availableFiles);
 }

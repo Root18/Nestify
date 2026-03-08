@@ -1,8 +1,7 @@
-namespace Nestify.Abstractions
+namespace Nestify.Abstractions;
+
+internal interface IFileValidator
 {
-    internal interface IFileValidator
-    {
-        bool IsSupportedFile(string fileName);
-        bool IsPickerCandidate(string fileName);
-    }
+    bool IsSupportedFile(string fileName);
+    bool IsPickerCandidate(string fileName);
 }

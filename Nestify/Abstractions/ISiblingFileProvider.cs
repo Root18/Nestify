@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 
-namespace Nestify.Abstractions
+namespace Nestify.Abstractions;
+
+internal interface ISiblingFileProvider
 {
-    internal interface ISiblingFileProvider
-    {
-        List<string> GetSiblingFiles(string directory, HashSet<string> excludeNames);
-    }
+    List<string> GetSiblingFiles(string directory, HashSet<string> excludeNames);
 }
