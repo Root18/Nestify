@@ -20,7 +20,9 @@ internal class DirectoryScanner(IAutoNestRuleEngine ruleEngine, IFileNestingServ
     private static readonly HashSet<string> ExcludedDirectories =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "bin", "obj", "node_modules"
+            "bin", "obj", "node_modules",
+            "dist", "build", "out",
+            ".next", ".nuxt"
         };
 
     public int ScanAndNest(string directory, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage)
@@ -56,10 +58,6 @@ internal class DirectoryScanner(IAutoNestRuleEngine ruleEngine, IFileNestingServ
 
             hierarchy.GetProperty(itemId, (int)__VSHPROPID.VSHPROPID_ExtObject, out var itemObj);
             if (itemObj is not ProjectItem childItem || IsAlreadyNested(childItem))
-                continue;
-
-            storage.GetItemAttribute(itemId, "NestifyExclude", out var excludeValue);
-            if (string.Equals(excludeValue, "true", StringComparison.OrdinalIgnoreCase))
                 continue;
 
             var parentFullPath = Path.Combine(directory, parentName);

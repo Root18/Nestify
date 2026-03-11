@@ -63,6 +63,7 @@ internal sealed class UnnestFilesCommand
             if (item.ProjectItem == null || !_fileValidator.IsSupportedFile(item.ProjectItem.Name)) continue;
             try
             {
+                if (item.ProjectItem.Collection == null) continue;
                 var parent = item.ProjectItem.Collection.Parent;
                 if (parent is not ProjectItem parentItem ||
                     !string.Equals(parentItem.Kind,
@@ -105,6 +106,7 @@ internal sealed class UnnestFilesCommand
 
             solution.GetProjectOfUniqueName(project.UniqueName, out IVsHierarchy hierarchy);
             var storage = hierarchy as IVsBuildPropertyStorage;
+            if (storage == null) return;
 
             foreach (var item in selectedItems)
             {
@@ -112,6 +114,20 @@ internal sealed class UnnestFilesCommand
             }
 
             project.Save();
+
+            if (NestifyPackage.Options != null && NestifyPackage.Options.AutoNestEnabled)
+            {
+                NestifyPackage.Options.AutoNestEnabled = false;
+
+                VsShellUtilities.ShowMessageBox(
+                    _package,
+                    "Auto-nest has been disabled to prevent re-nesting the files you just unnested.\n\n" +
+                    "You can re-enable it via the \"Nestify: Enable Auto-nest\" command in the context menu.",
+                    "Nestify",
+                    OLEMSGICON.OLEMSGICON_INFO,
+                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            }
         }
         catch (Exception ex)
         {

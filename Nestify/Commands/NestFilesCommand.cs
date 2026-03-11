@@ -22,6 +22,7 @@ internal sealed class NestFilesCommand
     private readonly IFileNestingService _nestingService;
     private readonly ISiblingFileProvider _siblingFileProvider;
     private readonly IDialogService _dialogService;
+    private string _invokedFileName;
 
     private NestFilesCommand(
         AsyncPackage package,
@@ -64,17 +65,22 @@ internal sealed class NestFilesCommand
         ThreadHelper.ThrowIfNotOnUIThread();
         var cmd = (OleMenuCommand)sender;
         cmd.Visible = false;
+        _invokedFileName = null;
 
         var dte = Package.GetGlobalService(typeof(DTE)) as DTE2;
         if (dte?.SelectedItems == null || dte.SelectedItems.Count == 0)
             return;
 
+        SelectedItem lastValid = null;
         foreach (SelectedItem item in dte.SelectedItems)
         {
             if (item.ProjectItem == null || !_fileValidator.IsSupportedFile(item.ProjectItem.Name)) continue;
             cmd.Visible = true;
-            return;
+            lastValid = item;
         }
+
+        if (lastValid != null)
+            _invokedFileName = lastValid.ProjectItem.Name;
     }
 
     private void Execute(object sender, EventArgs e)
@@ -118,9 +124,24 @@ internal sealed class NestFilesCommand
                 CollectDescendantNames(item, selectedFileNames);
             }
 
-            var siblingFiles = _siblingFileProvider.GetSiblingFiles(directory, selectedFileNames);
+            List<string> pickerCandidates;
+            if (selectedItems.Count > 1)
+            {
+                pickerCandidates = selectedItems
+                    .Select(i =>
+                    {
+                        ThreadHelper.ThrowIfNotOnUIThread();
+                        return i.Name;
+                    })
+                    .ToList();
+                pickerCandidates.Sort(StringComparer.OrdinalIgnoreCase);
+            }
+            else
+            {
+                pickerCandidates = _siblingFileProvider.GetSiblingFiles(directory, selectedFileNames);
+            }
 
-            if (siblingFiles.Count == 0)
+            if (pickerCandidates.Count == 0)
             {
                 VsShellUtilities.ShowMessageBox(
                     _package,
@@ -132,13 +153,14 @@ internal sealed class NestFilesCommand
                 return;
             }
 
-            var parentFileName = _dialogService.ShowParentFilePicker(siblingFiles, dte.MainWindow.HWnd);
+            var parentFileName = _dialogService.ShowParentFilePicker(pickerCandidates, dte.MainWindow.HWnd);
             if (string.IsNullOrEmpty(parentFileName))
                 return;
 
             if (Package.GetGlobalService(typeof(SVsSolution)) is not IVsSolution solution) return;
             solution.GetProjectOfUniqueName(project.UniqueName, out IVsHierarchy hierarchy);
             var storage = hierarchy as IVsBuildPropertyStorage;
+            if (storage == null) return;
 
             var parentFullPath = Path.Combine(directory, parentFileName);
             if (hierarchy.ParseCanonicalName(parentFullPath, out var parentId) != 0 || parentId == 0)
@@ -150,6 +172,8 @@ internal sealed class NestFilesCommand
 
             foreach (var item in selectedItems)
             {
+                if (string.Equals(item.Name, parentFileName, StringComparison.OrdinalIgnoreCase))
+                    continue;
                 _nestingService.NestFile(item, parentItem, hierarchy, storage);
             }
 

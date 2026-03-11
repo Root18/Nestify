@@ -12,6 +12,8 @@ internal class FileValidator : IFileValidator
         {
             ".cs", ".vb", ".fs",
             ".js", ".jsx", ".ts", ".tsx",
+            ".mjs", ".mts", ".cjs", ".cts",
+            ".vue",
             ".css", ".scss", ".less",
             ".html", ".htm",
             ".json", ".xml", ".config",

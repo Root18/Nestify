@@ -48,6 +48,9 @@ internal sealed class AutoNestCommand
         var cmd = (OleMenuCommand)sender;
         cmd.Visible = false;
 
+        if (NestifyPackage.Options == null || !NestifyPackage.Options.AutoNestEnabled)
+            return;
+
         var dte = Package.GetGlobalService(typeof(DTE)) as DTE2;
         if (dte?.SelectedItems == null || dte.SelectedItems.Count == 0)
         {
@@ -102,6 +105,7 @@ internal sealed class AutoNestCommand
 
             solution.GetProjectOfUniqueName(project.UniqueName, out var hierarchy);
             var storage = hierarchy as IVsBuildPropertyStorage;
+            if (storage == null) return;
 
             var nestedCount = _directoryScanner.ScanAndNest(targetDirectory, hierarchy, storage);
 

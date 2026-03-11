@@ -39,6 +39,13 @@
           <ButtonText>Nestify: Auto-nest</ButtonText>
         </Strings>
       </Button>
+      <Button guid="guidNestifyCmdSet" id="ToggleAutoNestCommandId" priority="0x0400" type="Button">
+        <Parent guid="guidNestifyCmdSet" id="NestifyProjectGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Nestify: Enable Auto-nest</ButtonText>
+        </Strings>
+      </Button>
     </Buttons>
   </Commands>
 
@@ -53,6 +60,9 @@
     <CommandPlacement guid="guidNestifyCmdSet" id="NestifyProjectGroup" priority="0x0250">
       <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_FOLDERNODE" />
     </CommandPlacement>
+    <CommandPlacement guid="guidNestifyCmdSet" id="ToggleAutoNestCommandId" priority="0x0250">
+      <Parent guid="guidNestifyCmdSet" id="NestifyMenuGroup" />
+    </CommandPlacement>
   </CommandPlacements>
 
   <Symbols>
@@ -63,6 +73,7 @@
       <IDSymbol name="NestFilesCommandId" value="0x0100" />
       <IDSymbol name="UnnestFilesCommandId" value="0x0200" />
       <IDSymbol name="AutoNestCommandId" value="0x0300" />
+      <IDSymbol name="ToggleAutoNestCommandId" value="0x0400" />
     </GuidSymbol>
   </Symbols>
 

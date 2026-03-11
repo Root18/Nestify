@@ -11,20 +11,20 @@ internal class FileNestingService : IFileNestingService
         IVsBuildPropertyStorage storage)
     {
         ThreadHelper.ThrowIfNotOnUIThread();
+        if (storage == null) return;
 
         var childPath = childItem.FileNames[1];
         if (hierarchy.ParseCanonicalName(childPath, out var itemId) != 0 || itemId == 0) return;
         storage.SetItemAttribute(itemId, "DependentUpon", parentItem.Name);
-        storage.SetItemAttribute(itemId, "NestifyExclude", "false");
     }
 
     public void UnnestFile(ProjectItem childItem, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage)
     {
         ThreadHelper.ThrowIfNotOnUIThread();
+        if (storage == null) return;
 
         var filePath = childItem.FileNames[1];
         if (hierarchy.ParseCanonicalName(filePath, out var itemId) != 0 || itemId == 0) return;
         storage.SetItemAttribute(itemId, "DependentUpon", "");
-        storage.SetItemAttribute(itemId, "NestifyExclude", "true");
     }
 }
