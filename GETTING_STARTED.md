@@ -36,6 +36,8 @@ Welcome to Nestify! This guide will help you get up and running in minutes.
 1. Select files in **Solution Explorer**.
 2. Right-click and choose **Auto-Nest**.
 3. Nestify automatically detects parent–child relationships using built-in rules:
+   - `UserService.md` nests under `UserService.cs` (C# documentation rule)
+   - `account.md` nests under `account.js` (JS documentation rule)
    - `UserService.cs` nests under `IUserService.cs` (C# interface rule)
    - `app.bundle.js` nests under `app.js` (JS bundle rule)
    - `app.bundle.min.js` nests under `app.bundle.js` (JS minified bundle rule)
@@ -45,7 +47,7 @@ Welcome to Nestify! This guide will help you get up and running in minutes.
 
 Nestify supports 20+ file types:
 
-`.cs` `.vb` `.fs` `.js` `.jsx` `.ts` `.tsx` `.css` `.scss` `.less` `.html` `.htm` `.json` `.xml` `.config` `.resx` `.xaml` `.razor` `.cshtml`
+`.cs` `.vb` `.fs` `.js` `.jsx` `.ts` `.tsx` `.css` `.scss` `.less` `.html` `.htm` `.json` `.xml` `.config` `.resx` `.xaml` `.razor` `.cshtml` `.md`
 
 ## Tips
 

@@ -70,6 +70,7 @@
     <Compile Include="Rules\JavaScriptBundleMinNestingRule.cs" />
     <Compile Include="Rules\JavaScriptBundleNestingRule.cs" />
     <Compile Include="Rules\JavaScriptMinNestingRule.cs" />
+    <Compile Include="Rules\MarkdownNestingRule.cs" />
     <Compile Include="Services\AutoNestRuleEngine.cs" />
     <Compile Include="Services\DialogService.cs" />
     <Compile Include="Services\DirectoryScanner.cs" />

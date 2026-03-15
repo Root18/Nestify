@@ -18,7 +18,8 @@ internal class FileValidator : IFileValidator
             ".html", ".htm",
             ".json", ".xml", ".config",
             ".resx", ".xaml",
-            ".razor", ".cshtml"
+            ".razor", ".cshtml",
+            ".md"
         };
 
     private static readonly HashSet<string> ExcludedFromPicker =

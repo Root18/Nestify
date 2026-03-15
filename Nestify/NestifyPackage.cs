@@ -38,6 +38,7 @@ public sealed class NestifyPackage : AsyncPackage
 
         INestingRule[] rules =
         [
+            new MarkdownNestingRule(),
             new CSharpInterfaceNestingRule(),
             new JavaScriptBundleMinNestingRule(),
             new JavaScriptBundleNestingRule(),

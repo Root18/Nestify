@@ -37,8 +37,9 @@ namespace Nestify.Tests.Services
         [DataRow(".config")]
         [DataRow(".resx")]
         [DataRow(".xaml")]
-        [DataRow(".razor")]
+         [DataRow(".razor")]
         [DataRow(".cshtml")]
+        [DataRow(".md")]
         public void IsSupportedFile_SupportedExtension_ReturnsTrue(string extension)
         {
             Assert.IsTrue(_validator.IsSupportedFile("file" + extension));

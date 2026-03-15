@@ -1,12 +1,13 @@
 # Release Notes
 
-## v1.1 — Multi-Select Picker Update
+## v1.1 — Multi-Select Picker & Markdown Documentation Support
 
 ### Features
 
 - **Nest Files** — When multiple files are selected, the picker dialog now displays **all selected files** as parent candidates. You can nest any selected file under any other selected file.
 - **Unnest Files** — Remove nesting and restore files to the top level.
 - **Auto-Nest** — Automatically detect parent–child relationships using built-in naming rules:
+  - Markdown documentation nesting (`ClassName.md` → `ClassName.cs` or `filename.md` → `filename.js`)
   - C# interface nesting (`UserService.cs` → `IUserService.cs`)
   - JavaScript bundle nesting (`app.bundle.js` → `app.js`)
   - JavaScript bundle + minified nesting (`app.bundle.min.js` → `app.bundle.js`)
@@ -14,7 +15,7 @@
 
 ### Supported File Types
 
-`.cs` `.vb` `.fs` `.js` `.jsx` `.ts` `.tsx` `.css` `.scss` `.less` `.html` `.htm` `.json` `.xml` `.config` `.resx` `.xaml` `.razor` `.cshtml`
+`.cs` `.vb` `.fs` `.js` `.jsx` `.ts` `.tsx` `.css` `.scss` `.less` `.html` `.htm` `.json` `.xml` `.config` `.resx` `.xaml` `.razor` `.cshtml` `.md`
 
 ### Supported Editions
 
