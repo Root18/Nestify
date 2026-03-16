@@ -36,6 +36,8 @@ Welcome to Nestify! This guide will help you get up and running in minutes.
 1. Select files in **Solution Explorer**.
 2. Right-click and choose **Auto-Nest**.
 3. Nestify automatically detects parent–child relationships using built-in rules:
+   - `UserService.md` nests under `UserService.cs` (C# documentation rule)
+   - `account.md` nests under `account.js` (JS documentation rule)
    - `UserService.cs` nests under `IUserService.cs` (C# interface rule)
    - `app.bundle.js` nests under `app.js` (JS bundle rule)
    - `app.bundle.min.js` nests under `app.bundle.js` (JS minified bundle rule)
@@ -45,13 +47,19 @@ Welcome to Nestify! This guide will help you get up and running in minutes.
 
 Nestify supports 20+ file types:
 
-`.cs` `.vb` `.fs` `.js` `.jsx` `.ts` `.tsx` `.css` `.scss` `.less` `.html` `.htm` `.json` `.xml` `.config` `.resx` `.xaml` `.razor` `.cshtml`
+`.cs` `.vb` `.fs` `.js` `.jsx` `.ts` `.tsx` `.css` `.scss` `.less` `.html` `.htm` `.json` `.xml` `.config` `.resx` `.xaml` `.razor` `.cshtml` `.md`
 
 ## Tips
 
 - **Multi-select** is supported — nest or unnest multiple files at once.
 - **Auto-Nest** works best when your files follow common naming conventions.
 - Nesting is non-destructive — it only changes how files appear in Solution Explorer, not on disk.
+
+## Project Compatibility Notes
+
+- Nestify supports different Visual Studio project systems, including common `.csproj` and Node.js `.njsproj` scenarios.
+- If you used an older version and saw project reload prompts after nesting operations, update to the latest build.
+- For best results, run nesting commands from Solution Explorer after the project has fully loaded.
 
 ## Need Help?
 

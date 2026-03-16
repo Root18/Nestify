@@ -10,167 +10,198 @@ using System.IO;
 using System.Linq;
 using Task = System.Threading.Tasks.Task;
 
-namespace Nestify.Commands
+namespace Nestify.Commands;
+
+internal sealed class NestFilesCommand
 {
-    internal sealed class NestFilesCommand
+    public const int CommandId = 0x0100;
+    public static readonly Guid CommandSet = new("e2c2b1a0-3d4e-4f5a-8b6c-7d8e9f0a1b2c");
+
+    private readonly AsyncPackage _package;
+    private readonly IFileValidator _fileValidator;
+    private readonly IFileNestingService _nestingService;
+    private readonly ISiblingFileProvider _siblingFileProvider;
+    private readonly IDialogService _dialogService;
+
+    private NestFilesCommand(
+        AsyncPackage package,
+        OleMenuCommandService commandService,
+        IFileValidator fileValidator,
+        IFileNestingService nestingService,
+        ISiblingFileProvider siblingFileProvider,
+        IDialogService dialogService)
     {
-        public const int CommandId = 0x0100;
-        public static readonly Guid CommandSet = new Guid("e2c2b1a0-3d4e-4f5a-8b6c-7d8e9f0a1b2c");
+        _package = package ?? throw new ArgumentNullException(nameof(package));
+        commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
+        _fileValidator = fileValidator ?? throw new ArgumentNullException(nameof(fileValidator));
+        _nestingService = nestingService ?? throw new ArgumentNullException(nameof(nestingService));
+        _siblingFileProvider = siblingFileProvider ?? throw new ArgumentNullException(nameof(siblingFileProvider));
+        _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
 
-        private readonly AsyncPackage _package;
-        private readonly IFileValidator _fileValidator;
-        private readonly IFileNestingService _nestingService;
-        private readonly ISiblingFileProvider _siblingFileProvider;
-        private readonly IDialogService _dialogService;
+        var menuCommandId = new CommandID(CommandSet, CommandId);
+        var menuItem = new OleMenuCommand(Execute, menuCommandId);
+        menuItem.BeforeQueryStatus += OnBeforeQueryStatus;
+        commandService.AddCommand(menuItem);
+    }
 
-        private NestFilesCommand(
-            AsyncPackage package,
-            OleMenuCommandService commandService,
-            IFileValidator fileValidator,
-            IFileNestingService nestingService,
-            ISiblingFileProvider siblingFileProvider,
-            IDialogService dialogService)
+    public static NestFilesCommand Instance { get; private set; }
+
+    public static async Task InitializeAsync(
+        AsyncPackage package,
+        IFileValidator fileValidator,
+        IFileNestingService nestingService,
+        ISiblingFileProvider siblingFileProvider,
+        IDialogService dialogService)
+    {
+        await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
+        var commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
+        Instance = new NestFilesCommand(package, commandService, fileValidator, nestingService, siblingFileProvider,
+            dialogService);
+    }
+
+    private void OnBeforeQueryStatus(object sender, EventArgs e)
+    {
+        ThreadHelper.ThrowIfNotOnUIThread();
+        var cmd = (OleMenuCommand)sender;
+        cmd.Visible = false;
+
+        var dte = Package.GetGlobalService(typeof(DTE)) as DTE2;
+        if (dte?.SelectedItems == null || dte.SelectedItems.Count == 0)
+            return;
+
+        SelectedItem lastValid = null;
+        foreach (SelectedItem item in dte.SelectedItems)
         {
-            _package = package ?? throw new ArgumentNullException(nameof(package));
-            commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
-            _fileValidator = fileValidator ?? throw new ArgumentNullException(nameof(fileValidator));
-            _nestingService = nestingService ?? throw new ArgumentNullException(nameof(nestingService));
-            _siblingFileProvider = siblingFileProvider ?? throw new ArgumentNullException(nameof(siblingFileProvider));
-            _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
-
-            var menuCommandID = new CommandID(CommandSet, CommandId);
-            var menuItem = new OleMenuCommand(Execute, menuCommandID);
-            menuItem.BeforeQueryStatus += OnBeforeQueryStatus;
-            commandService.AddCommand(menuItem);
+            if (item.ProjectItem == null || !_fileValidator.IsSupportedFile(item.ProjectItem.Name)) continue;
+            cmd.Visible = true;
+            lastValid = item;
         }
 
-        public static NestFilesCommand Instance { get; private set; }
-
-        public static async Task InitializeAsync(
-            AsyncPackage package,
-            IFileValidator fileValidator,
-            IFileNestingService nestingService,
-            ISiblingFileProvider siblingFileProvider,
-            IDialogService dialogService)
+        if (lastValid != null)
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
-            var commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
-            Instance = new NestFilesCommand(package, commandService, fileValidator, nestingService, siblingFileProvider, dialogService);
         }
+    }
 
-        private void OnBeforeQueryStatus(object sender, EventArgs e)
+    private void Execute(object sender, EventArgs e)
+    {
+        ThreadHelper.ThrowIfNotOnUIThread();
+
+        try
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            var cmd = (OleMenuCommand)sender;
-            cmd.Visible = false;
-
             var dte = Package.GetGlobalService(typeof(DTE)) as DTE2;
             if (dte?.SelectedItems == null || dte.SelectedItems.Count == 0)
                 return;
 
+            var selectedItems = new List<ProjectItem>();
+            Project project = null;
+
             foreach (SelectedItem item in dte.SelectedItems)
             {
-                if (item.ProjectItem != null && _fileValidator.IsSupportedFile(item.ProjectItem.Name))
-                {
-                    cmd.Visible = true;
-                    return;
-                }
+                if (item.ProjectItem == null || !_fileValidator.IsSupportedFile(item.ProjectItem.Name)) continue;
+                selectedItems.Add(item.ProjectItem);
+                project ??= item.ProjectItem.ContainingProject;
             }
-        }
 
-        private void Execute(object sender, EventArgs e)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
+            if (selectedItems.Count == 0 || project == null)
+                return;
 
-            try
+            var firstItemPath = selectedItems[0].FileNames[1];
+            var directory = Path.GetDirectoryName(firstItemPath);
+
+            if (string.IsNullOrEmpty(directory))
+                return;
+
+            var selectedFileNames = new HashSet<string>(
+                selectedItems.Select(i =>
+                {
+                    ThreadHelper.ThrowIfNotOnUIThread();
+                    return i.Name;
+                }), StringComparer.OrdinalIgnoreCase);
+
+            foreach (var item in selectedItems)
             {
-                var dte = Package.GetGlobalService(typeof(DTE)) as DTE2;
-                if (dte?.SelectedItems == null || dte.SelectedItems.Count == 0)
-                    return;
-
-                var selectedItems = new List<ProjectItem>();
-                Project project = null;
-
-                foreach (SelectedItem item in dte.SelectedItems)
-                {
-                    if (item.ProjectItem != null && _fileValidator.IsSupportedFile(item.ProjectItem.Name))
-                    {
-                        selectedItems.Add(item.ProjectItem);
-                        if (project == null)
-                            project = item.ProjectItem.ContainingProject;
-                    }
-                }
-
-                if (selectedItems.Count == 0 || project == null)
-                    return;
-
-                string firstItemPath = selectedItems[0].FileNames[1];
-                string directory = Path.GetDirectoryName(firstItemPath);
-
-                var selectedFileNames = new HashSet<string>(
-                    selectedItems.Select(i => { ThreadHelper.ThrowIfNotOnUIThread(); return i.Name; }), StringComparer.OrdinalIgnoreCase);
-
-                foreach (var item in selectedItems)
-                {
-                    CollectDescendantNames(item, selectedFileNames);
-                }
-
-                var siblingFiles = _siblingFileProvider.GetSiblingFiles(directory, selectedFileNames);
-
-                if (siblingFiles.Count == 0)
-                {
-                    VsShellUtilities.ShowMessageBox(
-                        _package,
-                        "No sibling files found to nest under.",
-                        "Nestify",
-                        OLEMSGICON.OLEMSGICON_INFO,
-                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-                    return;
-                }
-
-                string parentFileName = _dialogService.ShowParentFilePicker(siblingFiles, dte.MainWindow.HWnd);
-                if (string.IsNullOrEmpty(parentFileName))
-                    return;
-
-                var solution = Package.GetGlobalService(typeof(SVsSolution)) as IVsSolution;
-                solution.GetProjectOfUniqueName(project.UniqueName, out IVsHierarchy hierarchy);
-                var storage = hierarchy as IVsBuildPropertyStorage;
-
-                foreach (var item in selectedItems)
-                {
-                    string itemFullPath = item.FileNames[1];
-                    if (hierarchy.ParseCanonicalName(itemFullPath, out uint itemId) == 0 && itemId != 0)
-                    {
-                        _nestingService.NestFile(storage, itemId, parentFileName);
-                    }
-                }
-
-                project.Save();
+                CollectDescendantNames(item, selectedFileNames);
             }
-            catch (Exception ex)
+
+            List<string> pickerCandidates;
+            if (selectedItems.Count > 1)
+            {
+                pickerCandidates = selectedItems
+                    .Select(i =>
+                    {
+                        ThreadHelper.ThrowIfNotOnUIThread();
+                        return i.Name;
+                    })
+                    .ToList();
+                pickerCandidates.Sort(StringComparer.OrdinalIgnoreCase);
+            }
+            else
+            {
+                pickerCandidates = _siblingFileProvider.GetSiblingFiles(directory, selectedFileNames);
+            }
+
+            if (pickerCandidates.Count == 0)
             {
                 VsShellUtilities.ShowMessageBox(
                     _package,
-                    $"An error occurred while nesting files:\n{ex.Message}",
+                    "No sibling files found to nest under.",
                     "Nestify",
-                    OLEMSGICON.OLEMSGICON_CRITICAL,
+                    OLEMSGICON.OLEMSGICON_INFO,
                     OLEMSGBUTTON.OLEMSGBUTTON_OK,
                     OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                return;
+            }
+
+            var parentFileName = _dialogService.ShowParentFilePicker(pickerCandidates, dte.MainWindow.HWnd);
+            if (string.IsNullOrEmpty(parentFileName))
+                return;
+
+            if (Package.GetGlobalService(typeof(SVsSolution)) is not IVsSolution solution) return;
+            solution.GetProjectOfUniqueName(project.UniqueName, out IVsHierarchy hierarchy);
+            var storage = hierarchy as IVsBuildPropertyStorage;
+
+            var parentFullPath = Path.Combine(directory, parentFileName);
+            if (hierarchy.ParseCanonicalName(parentFullPath, out var parentId) != 0 || parentId == 0)
+                return;
+
+            hierarchy.GetProperty(parentId, (int)__VSHPROPID.VSHPROPID_ExtObject, out var parentObj);
+            if (parentObj is not ProjectItem parentItem)
+                return;
+
+            foreach (var item in selectedItems)
+            {
+                if (string.Equals(item.Name, parentFileName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                _nestingService.NestFile(item, parentItem, hierarchy, storage);
+            }
+
+            if (string.Equals(Path.GetExtension(project.FullName), ".njsproj", StringComparison.OrdinalIgnoreCase))
+            {
+                project.Save();
             }
         }
-
-        private static void CollectDescendantNames(ProjectItem item, HashSet<string> names)
+        catch (Exception ex)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
+            VsShellUtilities.ShowMessageBox(
+                _package,
+                $"An error occurred while nesting files:\n{ex.Message}",
+                "Nestify",
+                OLEMSGICON.OLEMSGICON_CRITICAL,
+                OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        }
+    }
 
-            if (item.ProjectItems == null || item.ProjectItems.Count == 0) return;
+    private static void CollectDescendantNames(ProjectItem item, HashSet<string> names)
+    {
+        ThreadHelper.ThrowIfNotOnUIThread();
 
-            foreach (ProjectItem child in item.ProjectItems)
-            {
-                names.Add(child.Name);
-                CollectDescendantNames(child, names);
-            }
+        if (item.ProjectItems == null || item.ProjectItems.Count == 0) return;
+
+        foreach (ProjectItem child in item.ProjectItems)
+        {
+            names.Add(child.Name);
+            CollectDescendantNames(child, names);
         }
     }
 }

@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 
-namespace Nestify.Abstractions
+namespace Nestify.Abstractions;
+
+internal interface IAutoNestRuleEngine
 {
-    internal interface IAutoNestRuleEngine
-    {
-        string FindParent(string fileName, HashSet<string> availableFiles);
-    }
+    string FindParent(string fileName, HashSet<string> availableFiles);
 }

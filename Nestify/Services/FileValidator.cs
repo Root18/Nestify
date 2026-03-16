@@ -3,22 +3,27 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Nestify.Services
+namespace Nestify.Services;
+
+internal class FileValidator : IFileValidator
 {
-    internal class FileValidator : IFileValidator
-    {
-        private static readonly HashSet<string> SupportedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> SupportedExtensions =
+        new(StringComparer.OrdinalIgnoreCase)
         {
             ".cs", ".vb", ".fs",
             ".js", ".jsx", ".ts", ".tsx",
+            ".mjs", ".mts", ".cjs", ".cts",
+            ".vue",
             ".css", ".scss", ".less",
             ".html", ".htm",
             ".json", ".xml", ".config",
             ".resx", ".xaml",
-            ".razor", ".cshtml"
+            ".razor", ".cshtml",
+            ".md"
         };
 
-        private static readonly HashSet<string> ExcludedFromPicker = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> ExcludedFromPicker =
+        new(StringComparer.OrdinalIgnoreCase)
         {
             "package.json",
             "package-lock.json",
@@ -82,15 +87,14 @@ namespace Nestify.Services
             "pnpm-lock.yaml",
         };
 
-        public bool IsSupportedFile(string fileName)
-        {
-            string ext = Path.GetExtension(fileName);
-            return !string.IsNullOrEmpty(ext) && SupportedExtensions.Contains(ext);
-        }
+    public bool IsSupportedFile(string fileName)
+    {
+        var ext = Path.GetExtension(fileName);
+        return !string.IsNullOrEmpty(ext) && SupportedExtensions.Contains(ext);
+    }
 
-        public bool IsPickerCandidate(string fileName)
-        {
-            return IsSupportedFile(fileName) && !ExcludedFromPicker.Contains(fileName);
-        }
+    public bool IsPickerCandidate(string fileName)
+    {
+        return IsSupportedFile(fileName) && !ExcludedFromPicker.Contains(fileName);
     }
 }

@@ -22,6 +22,11 @@ namespace Nestify.Tests.Services
         [DataRow(".jsx")]
         [DataRow(".ts")]
         [DataRow(".tsx")]
+        [DataRow(".mjs")]
+        [DataRow(".mts")]
+        [DataRow(".cjs")]
+        [DataRow(".cts")]
+        [DataRow(".vue")]
         [DataRow(".css")]
         [DataRow(".scss")]
         [DataRow(".less")]
@@ -32,8 +37,9 @@ namespace Nestify.Tests.Services
         [DataRow(".config")]
         [DataRow(".resx")]
         [DataRow(".xaml")]
-        [DataRow(".razor")]
+         [DataRow(".razor")]
         [DataRow(".cshtml")]
+        [DataRow(".md")]
         public void IsSupportedFile_SupportedExtension_ReturnsTrue(string extension)
         {
             Assert.IsTrue(_validator.IsSupportedFile("file" + extension));
@@ -44,7 +50,6 @@ namespace Nestify.Tests.Services
         [DataRow(".png")]
         [DataRow(".exe")]
         [DataRow(".dll")]
-        [DataRow(".md")]
         [DataRow(".yml")]
         [DataRow(".sln")]
         public void IsSupportedFile_UnsupportedExtension_ReturnsFalse(string extension)
