@@ -105,11 +105,11 @@ internal sealed class AutoNestCommand
 
             solution.GetProjectOfUniqueName(project.UniqueName, out var hierarchy);
             var storage = hierarchy as IVsBuildPropertyStorage;
-            if (storage == null) return;
 
             var nestedCount = _directoryScanner.ScanAndNest(targetDirectory, hierarchy, storage);
 
-            if (nestedCount > 0)
+            if (nestedCount > 0 &&
+                string.Equals(Path.GetExtension(project.FullName), ".njsproj", StringComparison.OrdinalIgnoreCase))
             {
                 project.Save();
             }

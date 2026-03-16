@@ -55,6 +55,12 @@ Nestify supports 20+ file types:
 - **Auto-Nest** works best when your files follow common naming conventions.
 - Nesting is non-destructive — it only changes how files appear in Solution Explorer, not on disk.
 
+## Project Compatibility Notes
+
+- Nestify supports different Visual Studio project systems, including common `.csproj` and Node.js `.njsproj` scenarios.
+- If you used an older version and saw project reload prompts after nesting operations, update to the latest build.
+- For best results, run nesting commands from Solution Explorer after the project has fully loaded.
+
 ## Need Help?
 
 - Check the [README](https://github.com/Root18/Nestify#readme) for full documentation.

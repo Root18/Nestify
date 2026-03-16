@@ -106,14 +106,16 @@ internal sealed class UnnestFilesCommand
 
             solution.GetProjectOfUniqueName(project.UniqueName, out IVsHierarchy hierarchy);
             var storage = hierarchy as IVsBuildPropertyStorage;
-            if (storage == null) return;
 
             foreach (var item in selectedItems)
             {
                 _nestingService.UnnestFile(item, hierarchy, storage);
             }
 
-            project.Save();
+            if (string.Equals(System.IO.Path.GetExtension(project.FullName), ".njsproj", StringComparison.OrdinalIgnoreCase))
+            {
+                project.Save();
+            }
 
             if (NestifyPackage.Options != null && NestifyPackage.Options.AutoNestEnabled)
             {

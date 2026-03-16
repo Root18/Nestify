@@ -22,7 +22,6 @@ internal sealed class NestFilesCommand
     private readonly IFileNestingService _nestingService;
     private readonly ISiblingFileProvider _siblingFileProvider;
     private readonly IDialogService _dialogService;
-    private string _invokedFileName;
 
     private NestFilesCommand(
         AsyncPackage package,
@@ -65,7 +64,6 @@ internal sealed class NestFilesCommand
         ThreadHelper.ThrowIfNotOnUIThread();
         var cmd = (OleMenuCommand)sender;
         cmd.Visible = false;
-        _invokedFileName = null;
 
         var dte = Package.GetGlobalService(typeof(DTE)) as DTE2;
         if (dte?.SelectedItems == null || dte.SelectedItems.Count == 0)
@@ -80,7 +78,8 @@ internal sealed class NestFilesCommand
         }
 
         if (lastValid != null)
-            _invokedFileName = lastValid.ProjectItem.Name;
+        {
+        }
     }
 
     private void Execute(object sender, EventArgs e)
@@ -160,7 +159,6 @@ internal sealed class NestFilesCommand
             if (Package.GetGlobalService(typeof(SVsSolution)) is not IVsSolution solution) return;
             solution.GetProjectOfUniqueName(project.UniqueName, out IVsHierarchy hierarchy);
             var storage = hierarchy as IVsBuildPropertyStorage;
-            if (storage == null) return;
 
             var parentFullPath = Path.Combine(directory, parentFileName);
             if (hierarchy.ParseCanonicalName(parentFullPath, out var parentId) != 0 || parentId == 0)
@@ -177,7 +175,10 @@ internal sealed class NestFilesCommand
                 _nestingService.NestFile(item, parentItem, hierarchy, storage);
             }
 
-            project.Save();
+            if (string.Equals(Path.GetExtension(project.FullName), ".njsproj", StringComparison.OrdinalIgnoreCase))
+            {
+                project.Save();
+            }
         }
         catch (Exception ex)
         {

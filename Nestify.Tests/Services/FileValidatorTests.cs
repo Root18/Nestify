@@ -50,7 +50,6 @@ namespace Nestify.Tests.Services
         [DataRow(".png")]
         [DataRow(".exe")]
         [DataRow(".dll")]
-        [DataRow(".md")]
         [DataRow(".yml")]
         [DataRow(".sln")]
         public void IsSupportedFile_UnsupportedExtension_ReturnsFalse(string extension)

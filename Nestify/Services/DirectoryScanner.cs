@@ -84,6 +84,10 @@ internal class DirectoryScanner(IAutoNestRuleEngine ruleEngine, IFileNestingServ
         ThreadHelper.ThrowIfNotOnUIThread();
         try
         {
+            // Check if item has a collection and collection has a parent
+            if (item?.Collection == null)
+                return false;
+
             var parent = item.Collection.Parent as ProjectItem;
             return parent != null && string.Equals(parent.Kind,
                 EnvDTE.Constants.vsProjectItemKindPhysicalFile,
