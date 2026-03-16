@@ -1,18 +1,5 @@
 # Release Notes
 
-## v1.2 — Project System Compatibility Improvements
-
-### Fixes
-
-- Improved nesting reliability across mixed project systems, including legacy and SDK-style projects.
-- Fixed cases where nested items did not appear immediately in Solution Explorer.
-- Reduced project-system conflicts that could trigger "File Modification Detected" / reload warnings.
-- Improved Node.js project (`.njsproj`) handling so nesting metadata is applied in the expected item type.
-
-### Notes
-
-- Nesting metadata behavior is now applied through project-system-friendly paths first, with safer fallback behavior.
-
 ## v1.1 — Multi-Select Picker & Markdown Documentation Support
 
 ### Features
@@ -25,6 +12,17 @@
   - JavaScript bundle nesting (`app.bundle.js` → `app.js`)
   - JavaScript bundle + minified nesting (`app.bundle.min.js` → `app.bundle.js`)
   - JavaScript minified nesting (`app.min.js` → `app.js`)
+
+### Fixes
+
+- Improved nesting reliability across mixed project systems, including legacy and SDK-style projects.
+- Fixed cases where nested items did not appear immediately in Solution Explorer.
+- Reduced project-system conflicts that could trigger "File Modification Detected" / reload warnings.
+- Improved Node.js project (`.njsproj`) handling so nesting metadata is applied in the expected item type.
+
+### Notes
+
+- Nesting metadata behavior is now applied through project-system-friendly paths first, with safer fallback behavior.
 
 ### Supported File Types
 
