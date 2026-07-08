@@ -1,7 +1,7 @@
-using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Nestify.Abstractions;
+using Nestify.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -28,6 +28,9 @@ internal class DirectoryScanner(IAutoNestRuleEngine ruleEngine, IFileNestingServ
     public int ScanAndNest(string directory, IVsHierarchy hierarchy, IVsBuildPropertyStorage storage)
     {
         ThreadHelper.ThrowIfNotOnUIThread();
+        if (hierarchy == null)
+            return 0;
+
         var nestedCount = 0;
         ProcessDirectory(directory, hierarchy, storage, ref nestedCount);
         return nestedCount;
@@ -53,17 +56,13 @@ internal class DirectoryScanner(IAutoNestRuleEngine ruleEngine, IFileNestingServ
             if (parentName == null)
                 continue;
 
-            if (hierarchy.ParseCanonicalName(filePath, out var itemId) != 0 || itemId == 0)
+            var childItem = VsHierarchyHelper.GetProjectItem(hierarchy, filePath);
+            if (childItem == null || ProjectItemHelper.IsNestedUnderFile(childItem))
                 continue;
 
-            hierarchy.GetProperty(itemId, (int)__VSHPROPID.VSHPROPID_ExtObject, out var itemObj);
-            if (itemObj is not ProjectItem childItem || IsAlreadyNested(childItem))
-                continue;
+            var parentItem = VsHierarchyHelper.GetProjectItem(hierarchy, Path.Combine(directory, parentName));
+            if (parentItem == null) continue;
 
-            var parentFullPath = Path.Combine(directory, parentName);
-            if (hierarchy.ParseCanonicalName(parentFullPath, out uint parentId) != 0 || parentId == 0) continue;
-            hierarchy.GetProperty(parentId, (int)__VSHPROPID.VSHPROPID_ExtObject, out object parentObj);
-            if (parentObj is not ProjectItem parentItem) continue;
             _nestingService.NestFile(childItem, parentItem, hierarchy, storage);
             nestedCount++;
         }
@@ -76,26 +75,6 @@ internal class DirectoryScanner(IAutoNestRuleEngine ruleEngine, IFileNestingServ
                 continue;
 
             ProcessDirectory(subDir, hierarchy, storage, ref nestedCount);
-        }
-    }
-
-    private static bool IsAlreadyNested(ProjectItem item)
-    {
-        ThreadHelper.ThrowIfNotOnUIThread();
-        try
-        {
-            // Check if item has a collection and collection has a parent
-            if (item?.Collection == null)
-                return false;
-
-            var parent = item.Collection.Parent as ProjectItem;
-            return parent != null && string.Equals(parent.Kind,
-                EnvDTE.Constants.vsProjectItemKindPhysicalFile,
-                StringComparison.OrdinalIgnoreCase);
-        }
-        catch
-        {
-            return false;
         }
     }
 }

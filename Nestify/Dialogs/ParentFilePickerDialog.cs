@@ -49,6 +49,7 @@ public class ParentFilePickerDialog : Window
             ToolTip = "Type to filter files"
         };
         _filterTextBox.TextChanged += FilterTextBox_TextChanged;
+        _filterTextBox.PreviewKeyDown += FilterTextBox_PreviewKeyDown;
         Grid.SetRow(_filterTextBox, 1);
         grid.Children.Add(_filterTextBox);
 
@@ -94,6 +95,28 @@ public class ParentFilePickerDialog : Window
 
         if (_allFiles.Count > 0)
             _fileListBox.SelectedIndex = 0;
+
+        Loaded += (_, _) => _filterTextBox.Focus();
+    }
+
+    private void FilterTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Down || _fileListBox.Items.Count == 0) return;
+
+        if (_fileListBox.SelectedIndex < 0)
+            _fileListBox.SelectedIndex = 0;
+
+        if (_fileListBox.ItemContainerGenerator.ContainerFromIndex(_fileListBox.SelectedIndex)
+            is ListBoxItem container)
+        {
+            container.Focus();
+        }
+        else
+        {
+            _fileListBox.Focus();
+        }
+
+        e.Handled = true;
     }
 
     private void FilterTextBox_TextChanged(object sender, TextChangedEventArgs e)

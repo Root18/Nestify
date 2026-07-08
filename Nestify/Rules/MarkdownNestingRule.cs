@@ -12,19 +12,19 @@ internal class MarkdownNestingRule : INestingRule
         return fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase);
     }
 
+    // Code files a markdown document can be nested under, in preference order.
+    private static readonly string[] ParentExtensions = [".cs", ".vb", ".ts", ".tsx", ".js", ".jsx"];
+
     public string FindParent(string fileName, HashSet<string> availableFiles)
     {
         var nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
 
-        // Try .cs first (C# documentation)
-        var csharpParent = nameWithoutExt + ".cs";
-        if (availableFiles.Contains(csharpParent))
-            return csharpParent;
-
-        // Try .js (JavaScript documentation)
-        var jsParent = nameWithoutExt + ".js";
-        if (availableFiles.Contains(jsParent))
-            return jsParent;
+        foreach (var extension in ParentExtensions)
+        {
+            var candidate = nameWithoutExt + extension;
+            if (availableFiles.Contains(candidate))
+                return candidate;
+        }
 
         return null;
     }

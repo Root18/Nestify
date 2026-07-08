@@ -26,13 +26,7 @@ public sealed class NestifyPackage : AsyncPackage
     protected override async Task InitializeAsync(CancellationToken cancellationToken,
         IProgress<ServiceProgressData> progress)
     {
-        await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
-
-        var settingsManager = new ShellSettingsManager(this);
-        var store = settingsManager.GetWritableSettingsStore(SettingsScope.UserSettings);
-        Options = new NestifyOptions(store);
-
-        // Compose the object graph (Composition Root)
+        // Compose the object graph (Composition Root) — no UI thread required for this part.
         IFileValidator fileValidator = new FileValidator();
         IFileNestingService nestingService = new FileNestingService();
 
@@ -48,6 +42,12 @@ public sealed class NestifyPackage : AsyncPackage
         IDirectoryScanner directoryScanner = new DirectoryScanner(ruleEngine, nestingService);
         ISiblingFileProvider siblingFileProvider = new SiblingFileProvider(fileValidator);
         IDialogService dialogService = new DialogService();
+
+        await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+
+        var settingsManager = new ShellSettingsManager(this);
+        var store = settingsManager.GetWritableSettingsStore(SettingsScope.UserSettings);
+        Options = new NestifyOptions(store);
 
         await Commands.NestFilesCommand.InitializeAsync(this, fileValidator, nestingService, siblingFileProvider,
             dialogService);
