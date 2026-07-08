@@ -77,6 +77,24 @@ namespace Nestify.Tests.Rules
         }
 
         [TestMethod]
+        [DataRow("Service.vb")]
+        [DataRow("Service.ts")]
+        [DataRow("Service.tsx")]
+        [DataRow("Service.jsx")]
+        public void FindParent_MarkdownWithOtherCodeFile_ReturnsCodeFile(string codeFile)
+        {
+            var availableFiles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+            {
+                codeFile,
+                "Service.md"
+            };
+
+            var parent = _rule.FindParent("Service.md", availableFiles);
+
+            Assert.AreEqual(codeFile, parent);
+        }
+
+        [TestMethod]
         public void FindParent_MarkdownWithoutParent_ReturnsNull()
         {
             var availableFiles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)

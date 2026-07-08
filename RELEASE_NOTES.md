@@ -1,5 +1,39 @@
 # Release Notes
 
+## v1.2 — Reliability & Safety Update
+
+### Fixes
+
+- **Build actions are preserved.** Nesting or unnesting a code file (e.g. `.cs`) no longer changes its build action — previously files could silently drop out of compilation in C# projects.
+- **Solution Explorer updates immediately.** Nesting and unnesting refresh the tree right away, without unloading/reloading the project, across legacy and SDK-style projects.
+- **Unnest only touches nested files.** Non-nested files in the selection are left untouched.
+- **Safer multi-select.** Nesting across different folders or projects is blocked with a clear message (nesting only works between same-folder siblings), and circular nesting is prevented. Unnesting selections that span multiple projects now works correctly.
+- **Safer project-file fallback.** Direct project-file editing is limited to project types where it is known to be safe (`.vbproj`, `.fsproj`, `.pyproj`), reuses existing items of any item type instead of creating duplicates, and never touches `.vcxproj`, `.shproj`, or other formats.
+- Unnesting no longer disables the Auto-nest toggle.
+- Fixed potential errors when a project hierarchy could not be resolved.
+
+### Improvements
+
+- Markdown documentation nesting now also pairs with `.vb`, `.ts`, `.tsx`, and `.jsx` files.
+- The parent picker dialog follows the active Visual Studio theme, opens centered on the IDE, focuses the filter box, and supports keyboard navigation (↓ moves into the list).
+- Auto-nest shows the standard Visual Studio wait dialog while scanning large directory trees.
+- Fallback errors are logged to the Visual Studio Activity Log for easier diagnostics.
+- Added ARM64 support (Visual Studio on Windows ARM64 devices).
+
+### Supported File Types
+
+`.cs` `.vb` `.fs` `.js` `.jsx` `.ts` `.tsx` `.mjs` `.mts` `.cjs` `.cts` `.vue` `.css` `.scss` `.less` `.html` `.htm` `.json` `.xml` `.config` `.resx` `.xaml` `.razor` `.cshtml` `.md`
+
+### Supported Editions
+
+- Visual Studio Community / Professional / Enterprise (17.0+), amd64 and arm64
+
+### Requirements
+
+- .NET Framework 4.7.2
+
+---
+
 ## v1.1 — Multi-Select Picker & Markdown Documentation Support
 
 ### Features

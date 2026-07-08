@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="Nestify.850dd390-9b51-4d4d-9ed9-e54d78374c24" Version="1.1" Language="en-US" Publisher="Imad Al-Muhtadi" />
+        <Identity Id="Nestify.850dd390-9b51-4d4d-9ed9-e54d78374c24" Version="1.2" Language="en-US" Publisher="Imad Al-Muhtadi" />
         <DisplayName>Nestify</DisplayName>
         <Description xml:space="preserve">Smart file nesting for Solution Explorer. Nest, unnest, and auto-nest files — keeping your .NET and JavaScript projects tidy and navigable. Supports C# interface nesting, minified/bundled JS nesting, and 20+ file types.</Description>
         <MoreInfo>https://github.com/Root18/Nestify</MoreInfo>
@@ -23,9 +23,18 @@
         <InstallationTarget Id="Microsoft.VisualStudio.Enterprise" Version="[17.0, )">
             <ProductArchitecture>amd64</ProductArchitecture>
         </InstallationTarget>
+        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, )">
+            <ProductArchitecture>arm64</ProductArchitecture>
+        </InstallationTarget>
+        <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[17.0, )">
+            <ProductArchitecture>arm64</ProductArchitecture>
+        </InstallationTarget>
+        <InstallationTarget Id="Microsoft.VisualStudio.Enterprise" Version="[17.0, )">
+            <ProductArchitecture>arm64</ProductArchitecture>
+        </InstallationTarget>
     </Installation>
     <Dependencies>
-        <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
+        <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.7.2,)" />
     </Dependencies>
     <Prerequisites>
         <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0, )" DisplayName="Visual Studio core editor" />

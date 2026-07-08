@@ -27,15 +27,17 @@ Nestify helps keep projects tidy by letting you **nest**, **unnest**, and **auto
 - JavaScript bundle nesting (`app.bundle.js` → `app.js`)
 - JavaScript minified bundle nesting (`app.bundle.min.js` → `app.bundle.js`)
 - JavaScript minified nesting (`app.min.js` → `app.js`)
-- Markdown documentation nesting (`ClassName.md` → `ClassName.cs` or `file.md` → `file.js`)
+- Markdown documentation nesting (`ClassName.md` → `ClassName.cs`; also pairs with `.vb`, `.ts`, `.tsx`, `.js`, `.jsx`)
+
+Nesting never changes a file's build action, and Solution Explorer updates immediately — no project reload needed.
 
 ## Supported File Types
 
-`.cs` `.vb` `.fs` `.js` `.jsx` `.ts` `.tsx` `.css` `.scss` `.less` `.html` `.htm` `.json` `.xml` `.config` `.resx` `.xaml` `.razor` `.cshtml` `.md`
+`.cs` `.vb` `.fs` `.js` `.jsx` `.ts` `.tsx` `.mjs` `.mts` `.cjs` `.cts` `.vue` `.css` `.scss` `.less` `.html` `.htm` `.json` `.xml` `.config` `.resx` `.xaml` `.razor` `.cshtml` `.md`
 
 ## Compatibility
 
-- Visual Studio **Community / Professional / Enterprise** (17.0+)
+- Visual Studio **Community / Professional / Enterprise** (17.0+), amd64 and arm64
 - .NET Framework **4.7.2**
 
 ## Links

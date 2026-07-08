@@ -12,21 +12,24 @@ A Visual Studio extension that brings smart file nesting to Solution Explorer. N
 
 ## Features
 
-- **Nest Files** — Manually nest selected files under a parent file using a picker dialog.
-- **Unnest Files** — Remove nesting and restore files to the top level.
+- **Nest Files** — Manually nest selected files under a parent file using a picker dialog (files must be siblings in the same folder).
+- **Unnest Files** — Remove nesting and restore files to the top level. Only files that are actually nested are touched.
 - **Auto-Nest** — Automatically detect parent–child relationships using built-in rules:
   - C# implementations nest under their interfaces (`UserService.cs` → `IUserService.cs`)
-  - Minified/bundled JS files nest under their source (`app.js` → `app.bundle.js` → `app.bundle.min.js`)
+  - Minified/bundled JS files nest under their source (`app.min.js` → `app.js`, `app.bundle.js` → `app.js`, `app.bundle.min.js` → `app.bundle.js`)
+  - Markdown documentation nests under the matching code file (`UserService.md` → `UserService.cs`; also `.vb`, `.ts`, `.tsx`, `.js`, `.jsx`)
+
+Nesting never changes a file's build action or other item metadata, and Solution Explorer reflects changes immediately — no project reload needed.
 
 ## Supported File Types
 
-`.cs` `.vb` `.fs` `.js` `.jsx` `.ts` `.tsx` `.css` `.scss` `.less` `.html` `.htm` `.json` `.xml` `.config` `.resx` `.xaml` `.razor` `.cshtml`
+`.cs` `.vb` `.fs` `.js` `.jsx` `.ts` `.tsx` `.mjs` `.mts` `.cjs` `.cts` `.vue` `.css` `.scss` `.less` `.html` `.htm` `.json` `.xml` `.config` `.resx` `.xaml` `.razor` `.cshtml` `.md`
 
 ## Requirements
 
 | Requirement    | Version                                      |
 | -------------- | -------------------------------------------- |
-| Visual Studio  | 2022 (17.0+) Community, Professional, or Enterprise |
+| Visual Studio  | 2022 or later (17.0+) Community, Professional, or Enterprise — amd64 and arm64 |
 | .NET Framework | 4.7.2                                        |
 
 ## Installation
@@ -37,9 +40,11 @@ Download and install the Nestify extension from the latest release.
 
 1. Right-click one or more files in **Solution Explorer**.
 2. Choose one of the Nestify commands from the context menu:
-   - **Nest Files** — pick a parent file from the dialog.
-   - **Unnest Files** — remove the nesting relationship.
-   - **Auto-Nest** — let Nestify find parents automatically based on naming rules.
+   - **Nestify: Nest under...** — pick a parent file from the dialog.
+   - **Nestify: Unnest** — remove the nesting relationship.
+   - **Nestify: Auto-nest** — let Nestify find parents automatically based on naming rules.
+
+To use Auto-nest, first enable it once via **Nestify: Enable Auto-nest** in the project node's context menu — the Auto-nest command then appears on project, folder, and file nodes.
 
 ## Contributing
 

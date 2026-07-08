@@ -38,20 +38,24 @@ This document confirms that Nestify file nesting functionality works with the fo
 
 ## Implementation Details
 
-### Dual Approach Strategy
+### Layered Strategy
 
-The `FileNestingService` uses a **dual approach** to ensure maximum compatibility:
+The `FileNestingService` applies nesting through the safest available channel, in order:
 
-1. **Primary Method: Direct XML Manipulation**
-   - Directly modifies the project file's XML structure
-   - Adds/removes the `DependentUpon` element in the project file
-   - Works reliably with all MSBuild-based project formats
-   - Handles both legacy and SDK-style project files
+1. **DTE project item properties** — sets `DependentUpon` through the project system,
+   preserving all other item metadata (build action, custom tools, copy settings, ...).
+2. **IVsBuildPropertyStorage** — used when the DTE property is unavailable.
+3. **Immediate tree refresh** — if the project system did not re-render Solution Explorer
+   right away (typical for legacy project systems), the item is re-parented via
+   `ProjectItems.AddFromFile`, which updates the tree instantly without a project reload.
+4. **Direct project-file (XML) fallback** — last resort, only for `.vbproj`, `.fsproj`,
+   and `.pyproj`, where `DependentUpon` nesting in the project file is known to be safe.
+   It reuses existing items of any item type (`Compile`, `Content`, `None`,
+   `EmbeddedResource`, `Page`, ...) and never creates duplicate items.
 
-2. **Fallback Method: IVsBuildPropertyStorage**
-   - Uses Visual Studio's property storage API
-   - Provides backward compatibility
-   - Activated only if XML manipulation fails
+Project types that are never edited directly: `.csproj`, `.esproj`, and `.njsproj`
+(always handled by the project system), `.vcxproj` (C++ nesting comes from `.filters`
+files), and `.shproj` (items live in the companion `.projitems` file).
 
 ### Project File Compatibility
 
@@ -79,10 +83,11 @@ Both formats use the same XML structure, ensuring compatibility across all Visua
 
 ## Testing
 
-- **Total Tests:** 147 passing
-- **Coverage:** All nesting functionality tests pass
+- **Total Tests:** 171 passing
+- **Coverage:** All nesting functionality tests pass, including the project-file fallback
+  (item reuse across item types, SDK-style `Update` items, per-project-type safety)
 - **Supported File Types:** 20+ file extensions
-- **Project Type Coverage:** C#, VB.NET, F#, Web, and all MSBuild-based projects
+- **Project Type Coverage:** C#, VB.NET, F#, Python, Node.js, Web, and all MSBuild-based projects
 
 ## Verified Scenarios
 
@@ -102,7 +107,10 @@ Both formats use the same XML structure, ensuring compatibility across all Visua
 
 - Solution folders themselves are not nestable (they're organizational units only)
 - Unloaded projects cannot have files nested (user must load project first)
-- Project file must be valid MSBuild XML to be modified
+- Files can only be nested under a file in the same folder of the same project
+  (`DependentUpon` is a same-folder sibling relationship)
+- C++ projects (`.vcxproj`) organize Solution Explorer via `.filters` files, which
+  do not honor `DependentUpon`-based nesting
 
 ## Conclusion
 

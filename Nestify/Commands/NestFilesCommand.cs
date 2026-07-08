@@ -1,8 +1,10 @@
 using EnvDTE;
 using EnvDTE80;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Nestify.Abstractions;
+using Nestify.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
@@ -53,7 +55,7 @@ internal sealed class NestFilesCommand
         ISiblingFileProvider siblingFileProvider,
         IDialogService dialogService)
     {
-        await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
+        await package.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
         var commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
         Instance = new NestFilesCommand(package, commandService, fileValidator, nestingService, siblingFileProvider,
             dialogService);
@@ -69,16 +71,11 @@ internal sealed class NestFilesCommand
         if (dte?.SelectedItems == null || dte.SelectedItems.Count == 0)
             return;
 
-        SelectedItem lastValid = null;
         foreach (SelectedItem item in dte.SelectedItems)
         {
             if (item.ProjectItem == null || !_fileValidator.IsSupportedFile(item.ProjectItem.Name)) continue;
             cmd.Visible = true;
-            lastValid = item;
-        }
-
-        if (lastValid != null)
-        {
+            return;
         }
     }
 
@@ -110,6 +107,28 @@ internal sealed class NestFilesCommand
 
             if (string.IsNullOrEmpty(directory))
                 return;
+
+            // DependentUpon nesting only works between items in the same folder of one project.
+            foreach (var item in selectedItems)
+            {
+                if (string.Equals(item.ContainingProject?.UniqueName, project.UniqueName,
+                        StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(Path.GetDirectoryName(item.FileNames[1]), directory,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                VsShellUtilities.ShowMessageBox(
+                    _package,
+                    "Files can only be nested under a file in the same folder of the same project.\n" +
+                    "Adjust your selection and try again.",
+                    "Nestify",
+                    OLEMSGICON.OLEMSGICON_INFO,
+                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                return;
+            }
 
             var selectedFileNames = new HashSet<string>(
                 selectedItems.Select(i =>
@@ -157,20 +176,24 @@ internal sealed class NestFilesCommand
                 return;
 
             if (Package.GetGlobalService(typeof(SVsSolution)) is not IVsSolution solution) return;
-            solution.GetProjectOfUniqueName(project.UniqueName, out IVsHierarchy hierarchy);
+            if (solution.GetProjectOfUniqueName(project.UniqueName, out IVsHierarchy hierarchy) != VSConstants.S_OK ||
+                hierarchy == null)
+            {
+                return;
+            }
+
             var storage = hierarchy as IVsBuildPropertyStorage;
 
             var parentFullPath = Path.Combine(directory, parentFileName);
-            if (hierarchy.ParseCanonicalName(parentFullPath, out var parentId) != 0 || parentId == 0)
-                return;
-
-            hierarchy.GetProperty(parentId, (int)__VSHPROPID.VSHPROPID_ExtObject, out var parentObj);
-            if (parentObj is not ProjectItem parentItem)
+            var parentItem = VsHierarchyHelper.GetProjectItem(hierarchy, parentFullPath);
+            if (parentItem == null)
                 return;
 
             foreach (var item in selectedItems)
             {
                 if (string.Equals(item.Name, parentFileName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (WouldCreateNestingCycle(item, parentItem))
                     continue;
                 _nestingService.NestFile(item, parentItem, hierarchy, storage);
             }
@@ -189,6 +212,29 @@ internal sealed class NestFilesCommand
                 OLEMSGICON.OLEMSGICON_CRITICAL,
                 OLEMSGBUTTON.OLEMSGBUTTON_OK,
                 OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        }
+    }
+
+    // Nesting a file under one of its own (transitive) nested children would create a cycle.
+    private static bool WouldCreateNestingCycle(ProjectItem child, ProjectItem parent)
+    {
+        ThreadHelper.ThrowIfNotOnUIThread();
+        try
+        {
+            var childPath = child.FileNames[1];
+            var current = parent;
+            while (current?.Collection?.Parent is ProjectItem ancestor)
+            {
+                if (string.Equals(ancestor.FileNames[1], childPath, StringComparison.OrdinalIgnoreCase))
+                    return true;
+                current = ancestor;
+            }
+
+            return false;
+        }
+        catch
+        {
+            return true;
         }
     }
 

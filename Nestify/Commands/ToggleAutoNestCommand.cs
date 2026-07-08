@@ -24,7 +24,7 @@ internal sealed class ToggleAutoNestCommand
 
     public static async Task InitializeAsync(AsyncPackage package)
     {
-        await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
+        await package.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
         var commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
         Instance = new ToggleAutoNestCommand(commandService);
     }
