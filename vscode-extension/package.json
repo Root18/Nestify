@@ -1,5 +1,5 @@
 {
-  "name": "nestify",
+  "name": "nestify-vscode",
   "displayName": "Nestify",
   "description": "Smart file nesting for the Explorer. Nest, unnest, and auto-nest files — keeping your projects tidy and navigable.",
   "version": "0.1.0",
