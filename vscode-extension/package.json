@@ -1,0 +1,94 @@
+{
+  "name": "nestify",
+  "displayName": "Nestify",
+  "description": "Smart file nesting for the Explorer. Nest, unnest, and auto-nest files — keeping your projects tidy and navigable.",
+  "version": "0.1.0",
+  "publisher": "Root18",
+  "author": {
+    "name": "Imad Al-Muhtadi"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Root18/Nestify"
+  },
+  "bugs": {
+    "url": "https://github.com/Root18/Nestify/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "file nesting",
+    "explorer",
+    "nest",
+    "organize",
+    "productivity"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "nestify.nestUnder",
+        "category": "Nestify",
+        "title": "Nest under..."
+      },
+      {
+        "command": "nestify.unnest",
+        "category": "Nestify",
+        "title": "Unnest"
+      },
+      {
+        "command": "nestify.autoNest",
+        "category": "Nestify",
+        "title": "Auto-nest (apply naming rules)"
+      },
+      {
+        "command": "nestify.removeAutoNestRules",
+        "category": "Nestify",
+        "title": "Remove auto-nest rules"
+      },
+      {
+        "command": "nestify.toggleFileNesting",
+        "category": "Nestify",
+        "title": "Toggle file nesting"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "nestify.nestUnder",
+          "when": "!explorerResourceIsFolder && filesExplorerFocus",
+          "group": "2_nestify@1"
+        },
+        {
+          "command": "nestify.unnest",
+          "when": "!explorerResourceIsFolder && filesExplorerFocus",
+          "group": "2_nestify@2"
+        },
+        {
+          "command": "nestify.autoNest",
+          "when": "filesExplorerFocus",
+          "group": "2_nestify@3"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -watch -p .",
+    "pretest": "npm run compile",
+    "test": "node --test \"out/test/**/*.test.js\"",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "~1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.4.0"
+  }
+}

@@ -46,6 +46,10 @@ Download and install the Nestify extension from the latest release.
 
 To use Auto-nest, first enable it once via **Nestify: Enable Auto-nest** in the project node's context menu — the Auto-nest command then appears on project, folder, and file nodes.
 
+## Nestify for VS Code
+
+A companion extension for **Visual Studio Code** lives in [`vscode-extension/`](vscode-extension/). It brings the same workflow — **Nest under...**, **Unnest**, and **Auto-nest** with the same naming rules — to VS Code's native Explorer file nesting, writing plain `explorer.fileNesting.patterns` settings that work for teammates even without the extension. See its [README](vscode-extension/README.md) for details.
+
 ## Contributing
 
 Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md) before submitting a pull request.
@@ -56,6 +60,7 @@ Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md)
 | --- | --- |
 | `Nestify` | Visual Studio extension (VSIX) — targets .NET Framework 4.7.2 |
 | `Nestify.Tests` | Unit tests (MSTest) — targets .NET Framework 4.7.2 |
+| `vscode-extension` | Nestify for VS Code (TypeScript) — builds with `npm run compile`, tests with `npm test` |
 
 Run the tests with:
 
